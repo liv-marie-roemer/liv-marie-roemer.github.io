@@ -6,8 +6,6 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-
 const csvUrl =
   import.meta.env.SHEET_URL ||
   "https://docs.google.com/spreadsheets/d/e/2PACX-1vRbS0w-mjXiSVqLJLy4LczQ0BlqiVz1qdbYCyjm6barhqPaCbTUPWvwFs4EMBpkQRWI_udouV_Cx81f/pub?output=csv";
@@ -113,10 +111,11 @@ if (htmlRes.ok) {
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" type="image/svg+xml" href="/favicon-black.svg" media="(prefers-color-scheme: light)" />
+    <link rel="icon" type="image/svg+xml" href="/favicon-white.svg" media="(prefers-color-scheme: dark)" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="generator" content={Astro.generator} />
-    <title>Astro</title>
+    <title>{data.title}</title>
   </head>
   <body data-edited={data.last_edited}>
     <div class="printmarks">
@@ -183,6 +182,7 @@ if (htmlRes.ok) {
   }
   html {
     height: 100%;
+    cursor: url('/cursor.svg'), auto;
   }
   html,
   body,
