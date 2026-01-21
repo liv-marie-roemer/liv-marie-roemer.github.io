@@ -1,0 +1,29 @@
+---
+const { scale = "1,1", isDouble = false } = Astro.props;
+const [scaleX, scaleY] = scale.split(",").map(Number);
+---
+
+{
+  isDouble ? (
+    <svg
+      width="32"
+      height="17"
+      viewBox="0 0 32 17"
+      fill="none"
+      style={`transform: scale(${scaleX}, ${scaleY});`}
+    >
+      <path d="M1.19209e-07 0.499999L16 0.5L16 16.5" stroke="black" />
+      <path d="M16 16.5L16 0.5L32 0.5" stroke="black" />
+    </svg>
+  ) : (
+    <svg
+      width="17"
+      height="17"
+      viewBox="0 0 17 17"
+      fill="none"
+      style={`transform: scale(${scaleX}, ${scaleY});`}
+    >
+      <path d="M0.5 16.5V0.5H16.5" stroke="black" stroke-width="1" />
+    </svg>
+  )
+}

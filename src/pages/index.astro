@@ -1,16 +1,117 @@
 ---
+import Papa from "papaparse";
+import PrintMark from "../components/print-mark.astro";
 
+const url = import.meta.env.SHEET_URL;
+console.log({ url });
+const res = await fetch(url, {
+  cache: "no-store",
+});
+
+if (!res.ok) {
+  throw new Error(`Failed to fetch: ${res.status}`);
+}
+
+const csv = await res.text();
+
+const parsed = Papa.parse(csv, {
+  header: false,
+  skipEmptyLines: true,
+});
+
+// Convert rows to key-value object
+const data: Record<string, string> = {};
+parsed.data.forEach((row: any) => {
+  if (row[0] && row[1]) {
+    data[row[0].toLowerCase().replace(" ", "_")] = row[1];
+  }
+});
 ---
 
 <html lang="en">
-	<head>
-		<meta charset="utf-8" />
-		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-		<meta name="viewport" content="width=device-width" />
-		<meta name="generator" content={Astro.generator} />
-		<title>Astro</title>
-	</head>
-	<body>
-		<h1>Astro</h1>
-	</body>
+  <head>
+    <meta charset="utf-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="generator" content={Astro.generator} />
+    <title>Astro</title>
+  </head>
+  <body data-edited={data.last_edited}>
+    <div class="printmarks">
+      <PrintMark />
+      <PrintMark isDouble/>
+      <PrintMark scale="-1,1"/>
+      <PrintMark scale="1,-1"/>
+      <PrintMark isDouble={true} scale="1,-1"/>
+      <PrintMark scale="-1,-1"/>
+    </div>
+    <h1>{data.title}</h1>
+    <div>{data.description}</div>
+    <div class="note">{data.note}</div>
+    <div>{data.address}</div>
+  </body>
 </html>
+
+<style lang="scss">
+  :root {
+    --printmark-gap: 14px;
+    --gap: 40px;
+    --font-size-big: 3vw;
+    --font-size: 1.5vw;
+  }
+  html {
+    height: 100%;
+  }
+  html,
+  body,
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    padding: 0;
+    margin: 0;
+  }
+  * {
+    font-family: inherit;
+    font-weight: inherit;
+    box-sizing: border-box;
+  }
+  body {
+    position: relative;
+    font-family: system-ui, sans-serif;
+    margin: 0 auto;
+    padding: var(--gap);
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: calc(var(--gap) * 2);
+    align-content: space-between;
+    min-height: 100%;
+    * {
+      font-size: var(--font-size-big);
+      white-space: pre-line;
+    }
+    *:nth-child(3),
+    *:nth-child(4) {
+      align-self: end;
+    }
+  }
+
+  .printmarks {
+    position: absolute;
+    top: var(--printmark-gap);
+    left: var(--printmark-gap);
+    right: var(--printmark-gap);
+    bottom: var(--printmark-gap);
+    display: grid;
+    grid-template-columns: repeat(3, auto);
+    align-content: space-between;
+    justify-content: space-between;
+    pointer-events: none;
+  }
+
+  .note {
+    font-size: var(--font-size);
+  }
+</style>
