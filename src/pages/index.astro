@@ -1,18 +1,28 @@
 ---
 import Papa from "papaparse";
 import PrintMark from "../components/print-mark.astro";
+import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 
-const url = import.meta.env.SHEET_URL || "https://docs.google.com/spreadsheets/d/e/2PACX-1vRbS0w-mjXiSVqLJLy4LczQ0BlqiVz1qdbYCyjm6barhqPaCbTUPWvwFs4EMBpkQRWI_udouV_Cx81f/pub?output=csv";
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-const res = await fetch(url, {
+const csvUrl =
+  import.meta.env.SHEET_URL ||
+  "https://docs.google.com/spreadsheets/d/e/2PACX-1vRbS0w-mjXiSVqLJLy4LczQ0BlqiVz1qdbYCyjm6barhqPaCbTUPWvwFs4EMBpkQRWI_udouV_Cx81f/pub?output=csv";
+
+const htmlUrl = csvUrl.replace("/pub?output=csv", "/pubhtml/sheet?headers=false&gid=0");
+
+// Fetch CSV for text data
+const csvRes = await fetch(csvUrl, {
   cache: "no-store",
 });
 
-if (!res.ok) {
-  throw new Error(`Failed to fetch: ${res.status}`);
+if (!csvRes.ok) {
+  throw new Error(`Failed to fetch CSV: ${csvRes.status}`);
 }
 
-const csv = await res.text();
+const csv = await csvRes.text();
 
 const parsed = Papa.parse(csv, {
   header: false,
@@ -23,9 +33,67 @@ const parsed = Papa.parse(csv, {
 const data: Record<string, string> = {};
 parsed.data.forEach((row: any) => {
   if (row[0] && row[1]) {
-    data[row[0].toLowerCase().replace(" ", "_")] = row[1];
+    data[row[0].toLowerCase().replace(/\s+/g, "_")] = row[1];
   }
 });
+
+// Fetch HTML to extract images
+const htmlRes = await fetch(htmlUrl, {
+  cache: "no-store",
+});
+
+if (htmlRes.ok) {
+  const html = await htmlRes.text();
+  
+  // Extract image URLs from HTML
+  const imageMatches = html.matchAll(/<img[^>]+src="([^"]+)"/gi);
+  const imageUrls: string[] = [];
+  
+  for (const match of imageMatches) {
+    const src = match[1];
+    // Only include Google user content images (actual uploaded images)
+    if (src.includes('googleusercontent.com') || src.includes('google.com/a/')) {
+      imageUrls.push(src);
+    }
+  }
+  
+  console.log('Found images:', imageUrls);
+  
+  // Download first image and save it locally
+  if (imageUrls.length > 0) {
+    const publicDir = path.join(__dirname, '../../public/images');
+    
+    // Ensure the images directory exists
+    if (!fs.existsSync(publicDir)) {
+      fs.mkdirSync(publicDir, { recursive: true });
+    }
+    
+    const imageUrl = imageUrls[0];
+    try {
+      const response = await fetch(imageUrl);
+      if (response.ok) {
+        const buffer = await response.arrayBuffer();
+        
+        // Get file extension from content-type or default to jpg
+        const contentType = response.headers.get('content-type');
+        let ext = 'jpg';
+        if (contentType?.includes('png')) ext = 'png';
+        if (contentType?.includes('gif')) ext = 'gif';
+        if (contentType?.includes('webp')) ext = 'webp';
+        
+        const filename = `image.${ext}`;
+        const filepath = path.join(publicDir, filename);
+        
+        fs.writeFileSync(filepath, new Uint8Array(buffer));
+        data.image = `/images/${filename}`;
+        console.log(`Downloaded: ${filename}`);
+      }
+    } catch (error) {
+      console.error('Failed to download image:', error);
+    }
+  }
+}
+
 ---
 
 <html lang="en">
@@ -40,24 +108,48 @@ parsed.data.forEach((row: any) => {
     <div class="printmarks">
       <PrintMark />
       <PrintMark isDouble/>
-      <PrintMark scale="-1,1"/>
-      <PrintMark scale="1,-1"/>
-      <PrintMark isDouble={true} scale="1,-1"/>
-      <PrintMark scale="-1,-1"/>
+      <PrintMark scale="-1,1" />
+      <PrintMark scale="1,-1" />
+      <PrintMark isDouble scale="1,-1" />
+      <PrintMark scale="-1,-1" />
     </div>
-    <h1>{data.title}</h1>
-    <div>{data.description}</div>
+    <h1>
+      <span>{data.title}</span>
+      {data.image ? <img src={data.image} alt="Uploaded Image" /> : <></>}
+    </h1>
+    <div class="description">{data.description}</div>
     <div class="note">{data.note}</div>
     <div>{data.address}</div>
+    <script>
+      const h1 = document.querySelector("h1 span")!;
+      const image = document.querySelector("img");
+      if (image) {
+        h1.addEventListener("mouseenter", () => {
+          const randomAngle = (Math.random() - 0.5) * 10;
+          image.style.transform = `rotate(${randomAngle}deg)`;
+          image.style.opacity = "1";
+        });
+        h1.addEventListener("mouseleave", () => {
+          image.style.opacity = "0";
+        });
+      }
+    </script>
   </body>
 </html>
 
 <style lang="scss">
+  $breakpoint-mobile: 768px;
+
   :root {
     --printmark-gap: 14px;
     --gap: 40px;
     --font-size-big: 3vw;
     --font-size: 1.5vw;
+    @media (max-width: #{$breakpoint-mobile}) {
+      --font-size-big: 30px;
+      --font-size: 15px;
+      --gap: 20px;
+    }
   }
   html {
     height: 100%;
@@ -81,23 +173,45 @@ parsed.data.forEach((row: any) => {
   body {
     position: relative;
     font-family: system-ui, sans-serif;
-    margin: 0 auto;
     padding: var(--gap);
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: calc(var(--gap) * 2);
-    align-content: space-between;
     min-height: 100%;
     * {
       font-size: var(--font-size-big);
       white-space: pre-line;
     }
-    *:nth-child(3),
-    *:nth-child(4) {
-      align-self: end;
+    @media (min-width: #{$breakpoint-mobile + 1}) {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: calc(var(--gap) * 2);
+      align-content: space-between;
+      *:nth-child(3),
+      *:nth-child(4) {
+        align-self: end;
+      }
+    }
+    @media (max-width: #{$breakpoint-mobile}) {
+      display: flex;
+      flex-direction: column;
+      & > *:not(:first-child) {
+        margin-top: var(--font-size-big);
+      }
+      h1 {
+        flex-grow: 1;
+        margin-top: 0 !important;
+      }
     }
   }
-
+  h1 {
+    position: relative;
+  }
+  img {
+    top: 0;
+    right: 0;
+    max-height: 50vh;
+    position: absolute;
+    pointer-events: none;
+    opacity: 0;
+  }
   .printmarks {
     position: absolute;
     top: var(--printmark-gap);
@@ -109,9 +223,16 @@ parsed.data.forEach((row: any) => {
     align-content: space-between;
     justify-content: space-between;
     pointer-events: none;
+    & > * {
+      opacity: .5;
+      transform: scale(10);
+    }
   }
-
+  
   .note {
     font-size: var(--font-size);
+    @media (max-width: #{$breakpoint-mobile}) {
+      order: 1000;
+    }
   }
 </style>
