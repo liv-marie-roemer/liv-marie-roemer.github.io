@@ -62,9 +62,11 @@ if (htmlRes.ok) {
   
   // Download first image and save it locally
   if (imageUrls.length > 0) {
-    const publicDir = path.join(__dirname, '../../public/images');
+    const rootDir = process.cwd();
+    const publicDir = path.join(rootDir, 'public', 'images');
+    const distDir = path.join(rootDir, 'dist', 'images');
     
-    // Ensure the images directory exists
+    // Ensure the public images directory exists
     if (!fs.existsSync(publicDir)) {
       fs.mkdirSync(publicDir, { recursive: true });
     }
@@ -83,11 +85,22 @@ if (htmlRes.ok) {
         if (contentType?.includes('webp')) ext = 'webp';
         
         const filename = `image.${ext}`;
-        const filepath = path.join(publicDir, filename);
+        const imageData = new Uint8Array(buffer);
         
-        fs.writeFileSync(filepath, new Uint8Array(buffer));
+        // Write to public for dev mode
+        fs.writeFileSync(path.join(publicDir, filename), imageData);
+        console.log(`Downloaded to: public/images/${filename}`);
+        
+        // Also write to dist if it exists (for production builds)
+        if (fs.existsSync(path.join(rootDir, 'dist'))) {
+          if (!fs.existsSync(distDir)) {
+            fs.mkdirSync(distDir, { recursive: true });
+          }
+          fs.writeFileSync(path.join(distDir, filename), imageData);
+          console.log(`Also copied to: dist/images/${filename}`);
+        }
+        
         data.image = `/images/${filename}`;
-        console.log(`Downloaded: ${filename}`);
       }
     } catch (error) {
       console.error('Failed to download image:', error);
