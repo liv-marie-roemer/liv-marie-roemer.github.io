@@ -137,6 +137,18 @@ if (htmlRes.ok) {
   </body>
 </html>
 
+<style lang="scss" is:global>
+  $breakpoint-mobile: 768px;
+
+  @media (max-width: #{$breakpoint-mobile}) {
+    .printmarks {
+      & > *:nth-child(2), & > *:nth-child(5) {
+        display: none;
+      }
+    }
+  }
+</style>
+
 <style lang="scss">
   $breakpoint-mobile: 768px;
 
@@ -223,6 +235,9 @@ if (htmlRes.ok) {
     align-content: space-between;
     justify-content: space-between;
     pointer-events: none;
+    @media (max-width: #{$breakpoint-mobile}) {
+      grid-template-columns: repeat(2, auto);
+    }
     & > * {
       opacity: .5;
       transform: scale(10);
