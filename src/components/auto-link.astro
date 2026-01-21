@@ -1,0 +1,36 @@
+---
+const { text } = Astro.props;
+
+function autoLink(text: string) {
+  if (!text) return '';
+  
+  let result = text;
+  
+  result = result.replace(
+    /([a-zA-Z0-9._-]+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9._-]+)/gi,
+    '<a href="mailto:$1">$1</a>'
+  );
+  
+  result = result.replace(
+    /(\+?\d{1,4}[\s-]?\(?\d{1,4}\)?[\s-]?\d{1,4}[\s-]?\d{1,9})/g,
+    (match) => {
+      const cleanNumber = match.replace(/[\s-]/g, '');
+      return `<a href="tel:${cleanNumber}">${match}</a>`;
+    }
+  );
+  
+  result = result.replace(
+    /(https?:\/\/[^\s]+)|(www\.[^\s]+)/gi,
+    (match) => {
+      const href = match.startsWith('www') ? `https://${match}` : match;
+      return `<a href="${href}" target="_blank" rel="noopener">${match}</a>`;
+    }
+  );
+  
+  return result;
+}
+
+const linkedText = autoLink(text);
+---
+
+<span set:html={linkedText} />

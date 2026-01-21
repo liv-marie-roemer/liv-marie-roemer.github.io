@@ -1,6 +1,7 @@
 ---
 import Papa from "papaparse";
 import PrintMark from "../components/print-mark.astro";
+import AutoLink from "../components/auto-link.astro";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -117,7 +118,7 @@ if (htmlRes.ok) {
       <span>{data.title}</span>
       {data.image ? <img src={data.image} alt="Uploaded Image" /> : <></>}
     </h1>
-    <div class="description">{data.description}</div>
+    <div class="description"><AutoLink text={data.description} /></div>
     <div class="note">{data.note}</div>
     <div>{data.address}</div>
     <script>
@@ -146,6 +147,10 @@ if (htmlRes.ok) {
         display: none;
       }
     }
+  }
+
+  a {
+    color: inherit
   }
 </style>
 
