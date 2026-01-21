@@ -4,7 +4,6 @@ import PrintMark from "../components/print-mark.astro";
 import AutoLink from "../components/auto-link.astro";
 import fs from "node:fs";
 import path from "node:path";
-import { fileURLToPath } from "node:url";
 
 const csvUrl =
   import.meta.env.SHEET_URL ||
@@ -132,8 +131,26 @@ if (htmlRes.ok) {
     </h1>
     <div class="description"><AutoLink text={data.description} /></div>
     <div class="note">{data.note}</div>
-    <div>{data.address}</div>
+    <div class="address">{data.address}</div>
     <script>
+      function onResize() {
+        const windowWidth = window.innerWidth;
+        if (windowWidth < 769) {
+          const columnWidth = windowWidth - 40;
+          const scaleFactor = columnWidth/336;
+          document.documentElement.style.setProperty('--font-size-big', `${22.5 * scaleFactor}px`);
+          document.documentElement.style.setProperty('--font-size', `${9 * scaleFactor}px`);
+        }
+        else {
+          const columnWidth = windowWidth / 2 - 80;
+          const scaleFactor = columnWidth/640;
+          document.documentElement.style.setProperty('--font-size-big', `${45 * scaleFactor}px`);
+          document.documentElement.style.setProperty('--font-size', `${18 * scaleFactor}px`);
+        }
+      }
+      window.addEventListener("resize", onResize);
+      onResize();
+
       const h1 = document.querySelector("h1 span")!;
       const image = document.querySelector("img");
       if (image) {
@@ -266,6 +283,13 @@ if (htmlRes.ok) {
     font-size: var(--font-size);
     @media (max-width: #{$breakpoint-mobile}) {
       order: 1000;
+    }
+  }
+
+  .address {
+    @media (max-width: #{$breakpoint-mobile}) {
+      padding-top: var(--font-size-big);
+      padding-bottom: var(--font-size-big);
     }
   }
 </style>
