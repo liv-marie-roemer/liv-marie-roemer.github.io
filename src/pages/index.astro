@@ -125,13 +125,13 @@ if (htmlRes.ok) {
       <PrintMark origin="50,100" path="M0 16 H32 M16 16 V0" width="32"/>
       <PrintMark origin="100,100" path="M16 0 V16 H0"/>
     </div>
-    <h1>
+    <h1 class="text-offset">
       <span>{data.title}</span>
       {data.image ? <img src={data.image} alt="Uploaded Image" /> : <></>}
     </h1>
-    <div class="description"><AutoLink text={data.description} /></div>
-    <div class="note">{data.note}</div>
-    <div class="address">{data.address}</div>
+    <div class="text-offset description"><AutoLink text={data.description} /></div>
+    <div class="text-offset note">{data.note}</div>
+    <div class="text-offset address">{data.address}</div>
     <script>
       function onResize() {
         const windowWidth = window.innerWidth;
@@ -254,8 +254,6 @@ if (htmlRes.ok) {
       font-size: var(--font-size-big);
       line-height: var(--line-height-big);
       white-space: pre-line;
-      margin-top: var(--cap-offset);
-      margin-bottom: var(--descender-offset);
       letter-spacing: -0.005em;
     }
     @media (min-width: #{$breakpoint-mobile + 1}) {
@@ -279,6 +277,10 @@ if (htmlRes.ok) {
         margin-top: 0 !important;
       }
     }
+  }
+  .text-offset {
+    margin-top: var(--cap-offset);
+    margin-bottom: var(--descender-offset);
   }
   h1 {
     position: relative;
