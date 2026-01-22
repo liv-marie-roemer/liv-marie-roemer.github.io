@@ -175,6 +175,10 @@ if (htmlRes.ok) {
       if (image) {
         h1.addEventListener("mouseenter", () => {
           const randomAngle = (Math.random() - 0.5) * 10;
+          const randomX = Math.random() * (window.innerWidth - image.offsetWidth);
+          const randomY = Math.random() * (window.innerHeight - image.offsetHeight);
+          image.style.left = `${randomX}px`;
+          image.style.top = `${randomY}px`;
           image.style.transform = `rotate(${randomAngle}deg)`;
           image.style.opacity = "1";
         });
@@ -196,10 +200,14 @@ if (htmlRes.ok) {
       }
     }
   }
-
+  
   a {
     color: inherit
   }
+  a:not(:hover) {
+    text-decoration: none;
+  }
+
 </style>
 
 <style lang="scss">
@@ -220,6 +228,7 @@ if (htmlRes.ok) {
       --font-size: 15px;
       --line-height: calc(10 / 9 * 1em);
       --gap: 20px;
+      --printmark-gap: 8px;
     }
   }
   html, body {
@@ -282,16 +291,12 @@ if (htmlRes.ok) {
     margin-top: var(--cap-offset);
     margin-bottom: var(--descender-offset);
   }
-  h1 {
-    position: relative;
-  }
   img {
-    top: 0;
-    right: 0;
     max-height: 50vh;
-    position: absolute;
+    position: fixed;
     pointer-events: none;
     opacity: 0;
+    transition: opacity 0.3s ease;
   }
   .printmarks {
     position: absolute;
