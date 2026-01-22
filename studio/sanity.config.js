@@ -2,6 +2,7 @@ import {defineConfig} from 'sanity'
 import {structureTool} from 'sanity/structure'
 import {visionTool} from '@sanity/vision'
 import {schemaTypes} from './schemaTypes'
+import DeployButton from './components/DeployButton'
 
 export default defineConfig({
   name: 'default',
@@ -24,6 +25,10 @@ export default defineConfig({
                   .schemaType('pageContent')
                   .documentId('pageContent')
               ),
+            S.divider(),
+            S.listItem()
+              .title('Deploy')
+              .child(S.component(DeployButton).title('Deploy to GitHub Pages')),
           ]),
     }),
     visionTool(),
