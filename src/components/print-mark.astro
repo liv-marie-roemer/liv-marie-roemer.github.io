@@ -1,31 +1,21 @@
 ---
-const { class: className, scale = "1,1", isDouble = false } = Astro.props;
-const [scaleX, scaleY] = scale.split(",").map(Number);
+const { class: className, path = "", origin = "50, 50", width = "16" } = Astro.props;
+const [originX, originY] = origin.split(",").map(Number);
 ---
 
-{
-  isDouble ? (
-    <svg
-      class={className}
-      width="32"
-      height="17"
-      viewBox="0 0 32 17"
-      fill="none"
-      style={`transform: scale(${scaleX}, ${scaleY});`}
-    >
-      <path d="M1.19209e-07 0.499999L16 0.5L16 16.5" stroke="black" />
-      <path d="M16 16.5L16 0.5L32 0.5" stroke="black" />
-    </svg>
-  ) : (
-    <svg
-      class={className}
-      width="17"
-      height="17"
-      viewBox="0 0 17 17"
-      fill="none"
-      style={`transform: scale(${scaleX}, ${scaleY});`}
-    >
-      <path d="M0.5 16.5V0.5H16.5" stroke="black" stroke-width="1" />
-    </svg>
-  )
-}
+<svg
+  class={className}
+  width={width}
+  height="16"
+  viewBox={`0 0 ${width} 16`}
+  fill="none"
+  style={`transform-origin: ${originX}% ${originY}%;`}
+>
+  <path d={path} stroke="black" stroke-width="1" />
+</svg>
+
+<style lang="scss">
+  svg {
+    overflow: visible;
+  }
+</style>

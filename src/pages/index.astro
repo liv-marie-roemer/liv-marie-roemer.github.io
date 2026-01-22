@@ -118,12 +118,12 @@ if (htmlRes.ok) {
   </head>
   <body data-edited={data.last_edited}>
     <div class="printmarks">
-      <PrintMark />
-      <PrintMark isDouble/>
-      <PrintMark scale="-1,1" />
-      <PrintMark scale="1,-1" />
-      <PrintMark isDouble scale="1,-1" />
-      <PrintMark scale="-1,-1" />
+      <PrintMark origin="0,0" path="M0 16 V0 H16"/>
+      <PrintMark origin="50,0" path="M0 0 H32 0 M16 0 V16" width="32"/>
+      <PrintMark origin="100,0" path="M16 16 V0 H0"/>
+      <PrintMark origin="0,100" path="M0 0 V16 H16"/>
+      <PrintMark origin="50,100" path="M0 16 H32 M16 16 V0" width="32"/>
+      <PrintMark origin="100,100" path="M16 0 V16 H0"/>
     </div>
     <h1>
       <span>{data.title}</span>
@@ -135,18 +135,37 @@ if (htmlRes.ok) {
     <script>
       function onResize() {
         const windowWidth = window.innerWidth;
+        let newFontSizeBig, newFontSize;
         if (windowWidth < 769) {
           const columnWidth = windowWidth - 40;
           const scaleFactor = columnWidth/336;
-          document.documentElement.style.setProperty('--font-size-big', `${22.5 * scaleFactor}px`);
-          document.documentElement.style.setProperty('--font-size', `${9 * scaleFactor}px`);
+          newFontSizeBig = `${Math.max(22.5 * scaleFactor, 22.5)}px`;
+          newFontSize = `${Math.max(9 * scaleFactor, 9)}px`;
         }
         else {
           const columnWidth = windowWidth / 2 - 80;
           const scaleFactor = columnWidth/640;
-          document.documentElement.style.setProperty('--font-size-big', `${45 * scaleFactor}px`);
-          document.documentElement.style.setProperty('--font-size', `${18 * scaleFactor}px`);
+          newFontSizeBig = `${45 * scaleFactor}px`;
+          newFontSize = `${18 * scaleFactor}px`;
         }
+        document.documentElement.style.setProperty('--font-size-big', newFontSizeBig);
+        document.documentElement.style.setProperty('--font-size', newFontSize);
+        
+        const printmarks = document.querySelectorAll<SVGElement>('.printmarks svg');
+        const locations = [[375, .5], [1440, 1]]
+
+        const [x1, scale1] = locations[0];
+        const [x2, scale2] = locations[1];
+
+        // Linear interpolation/extrapolation formula: y = y1 + (x - x1) * (y2 - y1) / (x2 - x1)
+        const newScale = scale1 + (windowWidth - x1) * (scale2 - scale1) / (x2 - x1);
+
+        printmarks.forEach(mark => {
+          mark.style.transform = `scale(${newScale})`;
+          const path = mark.querySelector('path')!;
+          path.style.strokeWidth = `${1 / newScale}`;
+        });
+        
       }
       window.addEventListener("resize", onResize);
       onResize();
@@ -196,6 +215,9 @@ if (htmlRes.ok) {
       --font-size: 15px;
       --gap: 20px;
     }
+  }
+  html, body {
+    overscroll-behavior: none;
   }
   html {
     height: 100%;
