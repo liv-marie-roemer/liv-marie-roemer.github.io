@@ -1,6 +1,5 @@
 ---
 import PrintMark from "../components/print-mark.astro";
-import AutoLink from "../components/auto-link.astro";
 
 // Sanity config
 const projectId = 'whg9r0qe';
@@ -8,7 +7,7 @@ const dataset = 'production';
 const apiVersion = '2024-01-01';
 
 // Fetch data from Sanity using HTTP API
-const query = encodeURIComponent('*[_type == "pageContent"][0]{title, description, note, address, image, _updatedAt}');
+const query = encodeURIComponent('*[_type == "pageContent"][0]{title, description[]{...}, note, address, image, _updatedAt}');
 const sanityUrl = `https://${projectId}.api.sanity.io/v${apiVersion}/data/query/${dataset}?query=${query}`;
 
 const sanityRes = await fetch(sanityUrl, {
@@ -22,10 +21,61 @@ if (!sanityRes.ok) {
 const sanityData = await sanityRes.json();
 const content = sanityData.result;
 
+// Helper to convert portable text to HTML
+function portableTextToHtml(blocks: any[]): string {
+  if (!blocks || !Array.isArray(blocks)) return '';
+  
+  return blocks
+    .map((block) => {
+      if (block._type !== 'block' || !block.children) return '';
+      
+      const text = block.children
+        .map((child: any) => {
+          if (child._type !== 'span') return '';
+          
+          let content = child.text;
+          
+          // Handle link marks
+          if (child.marks && child.marks.length > 0) {
+            child.marks.forEach((mark: string) => {
+              const markDef = block.markDefs?.find((def: any) => def._key === mark);
+              if (markDef) {
+                if (markDef._type === 'link') {
+                  let href = markDef.link;
+                  let attrs = '';
+                  
+                  if (markDef.linkType === 'email') {
+                    href = `mailto:${href}`;
+                  } else if (markDef.linkType === 'phone') {
+                    href = `tel:${href}`;
+                  } else {
+                    attrs = ' target="_blank" rel="noopener"';
+                  }
+                  
+                  content = `<a href="${href}"${attrs}>${content}</a>`;
+                } else if (markDef._type === 'download' && markDef.file?.asset?._ref) {
+                  const fileRef = markDef.file.asset._ref;
+                  const fileId = fileRef.replace('file-', '').replace(/-([a-z0-9]+)$/i, '.$1');
+                  const href = `https://cdn.sanity.io/files/${projectId}/${dataset}/${fileId}`;
+                  content = `<a href="${href}" target="_blank" download>${content}</a>`;
+                }
+              }
+            });
+          }
+          
+          return content;
+        })
+        .join('');
+      
+      return text;
+    })
+    .join('\n');
+}
+
 // Transform Sanity data to match expected format
 const data: Record<string, string> = {
   title: content?.title || '',
-  description: content?.description || '',
+  description: portableTextToHtml(content?.description),
   note: content?.note || '',
   address: content?.address || '',
   last_edited: content?._updatedAt ? new Date(content._updatedAt).toLocaleDateString() : '',
@@ -66,7 +116,7 @@ if (content?.image?.asset?._ref) {
       <span>{data.title}</span>
       {data.image ? <img src={data.image} alt="Uploaded Image" /> : <></>}
     </h1>
-    <div class="text-offset description"><AutoLink text={data.description} /></div>
+    <div class="text-offset description" set:html={data.description}></div>
     <div class="text-offset note">{data.note}</div>
     <div class="text-offset address">{data.address}</div>
     <script>

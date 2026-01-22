@@ -13,9 +13,57 @@ export default defineType({
     },
     {
       name: 'description',
-      type: 'text',
+      type: 'array',
       title: 'Description',
-      rows: 4,
+      of: [
+        {
+          type: 'block',
+          styles: [],
+          lists: [],
+          marks: {
+            decorators: [],
+            annotations: [
+              {
+                name: 'link',
+                type: 'object',
+                title: 'Link',
+                fields: [
+                  {
+                    name: 'linkType',
+                    type: 'string',
+                    title: 'Link Type',
+                    options: {
+                      list: [
+                        {title: 'Link', value: 'link'},
+                        {title: 'Email', value: 'email'},
+                        {title: 'Phone', value: 'phone'},
+                      ],
+                    },
+                    initialValue: 'link',
+                  },
+                  {
+                    name: 'link',
+                    type: 'string',
+                    title: 'Link',
+                  },
+                ],
+              },
+              {
+                name: 'download',
+                type: 'object',
+                title: 'Download',
+                fields: [
+                  {
+                    name: 'file',
+                    type: 'file',
+                    title: 'File',
+                  },
+                ],
+              },
+            ],
+          },
+        },
+      ],
     },
     {
       name: 'note',
