@@ -209,10 +209,16 @@ if (htmlRes.ok) {
     --printmark-gap: 14px;
     --gap: 40px;
     --font-size-big: 3vw;
+    --line-height-big: calc(45 / 44 * 1em);
     --font-size: 1.5vw;
+    --line-height: calc(19 / 18 * 1em);
+    --cap-offset: -0.15em;
+    --descender-offset: -0.2em;
     @media (max-width: #{$breakpoint-mobile}) {
       --font-size-big: 30px;
+      --line-height-big: calc(23.1 / 22.5 * 1em);
       --font-size: 15px;
+      --line-height: calc(10 / 9 * 1em);
       --gap: 20px;
     }
   }
@@ -244,9 +250,13 @@ if (htmlRes.ok) {
     font-family: system-ui, sans-serif;
     padding: var(--gap);
     min-height: 100%;
-    * {
+    & > * {
       font-size: var(--font-size-big);
+      line-height: var(--line-height-big);
       white-space: pre-line;
+      margin-top: var(--cap-offset);
+      margin-bottom: var(--descender-offset);
+      letter-spacing: -0.005em;
     }
     @media (min-width: #{$breakpoint-mobile + 1}) {
       display: grid;
@@ -303,6 +313,7 @@ if (htmlRes.ok) {
   
   .note {
     font-size: var(--font-size);
+    line-height: var(--line-height);
     @media (max-width: #{$breakpoint-mobile}) {
       order: 1000;
     }
