@@ -15,6 +15,7 @@
     "sanity"
   ],
   "dependencies": {
+    "@sanity/studio-secrets": "^3.0.3",
     "@sanity/vision": "^5.6.0",
     "react": "^19.1",
     "react-dom": "^19.1",

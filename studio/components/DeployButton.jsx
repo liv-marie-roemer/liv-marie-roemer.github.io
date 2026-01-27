@@ -1,9 +1,22 @@
 import {Card, Button, Stack, Text} from '@sanity/ui'
 import {useState} from 'react'
+import {useSecrets, SettingsView} from '@sanity/studio-secrets'
+
+const NAMESPACE = 'github-deploy'
+
+const PLUGIN_CONFIG_KEYS = [
+  {
+    key: 'githubToken',
+    title: 'GitHub Personal Access Token',
+    description: 'GitHub PAT with repo scope to trigger workflows',
+  }
+]
 
 export default function DeployButton() {
   const [isDeploying, setIsDeploying] = useState(false)
   const [status, setStatus] = useState('')
+  const {secrets} = useSecrets(NAMESPACE)
+  const [showSettings, setShowSettings] = useState(false)
 
   const triggerDeploy = async () => {
     setIsDeploying(true)
@@ -11,7 +24,7 @@ export default function DeployButton() {
 
     try {
       // GitHub Personal Access Token should be stored in environment variable
-      const token = import.meta.env.SANITY_STUDIO_GITHUB_TOKEN
+      const token = secrets?.githubToken
 
       if (!token) {
         setStatus('Error: GitHub token not configured')
@@ -31,7 +44,7 @@ export default function DeployButton() {
           body: JSON.stringify({
             ref: 'main',
           }),
-        }
+        },
       )
 
       if (response.status === 204) {
@@ -66,6 +79,21 @@ export default function DeployButton() {
           <Text size={1} muted>
             {status}
           </Text>
+        )}
+        <Button
+          text="Configure Deployment Settings"
+          tone="default"
+          onClick={() => setShowSettings(true)}
+        />
+        {showSettings && (
+          <SettingsView
+            title={'Deploy Configuration'}
+            namespace={NAMESPACE}
+            keys={PLUGIN_CONFIG_KEYS}
+            onClose={() => {
+              setShowSettings(false)
+            }}
+          />
         )}
       </Stack>
     </Card>
