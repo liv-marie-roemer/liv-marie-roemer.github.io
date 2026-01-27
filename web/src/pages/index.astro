@@ -38,12 +38,16 @@ function portableTextToHtml(blocks: any[]): string {
           // Handle link marks
           if (child.marks && child.marks.length > 0) {
             child.marks.forEach((mark: string) => {
+              // Handle decorators
+              if (mark === 'smallcaps') {
+                content = `<span style="font-variant: small-caps;">${content}</span>`;
+              }
+              // Handle annotations
               const markDef = block.markDefs?.find((def: any) => def._key === mark);
               if (markDef) {
                 if (markDef._type === 'link') {
                   let href = markDef.link;
                   let attrs = '';
-                  
                   if (markDef.linkType === 'email') {
                     href = `mailto:${href}`;
                   } else if (markDef.linkType === 'phone') {
@@ -51,7 +55,6 @@ function portableTextToHtml(blocks: any[]): string {
                   } else {
                     attrs = ' target="_blank" rel="noopener"';
                   }
-                  
                   content = `<a href="${href}"${attrs}>${content}</a>`;
                 } else if (markDef._type === 'download' && markDef.file?.asset?._ref) {
                   const fileRef = markDef.file.asset._ref;
@@ -131,8 +134,8 @@ const data: DataType = {
   meta,
   title: content?.title || '',
   description: portableTextToHtml(content?.description),
-  note: content?.note || '',
-  address: content?.address || '',
+  note: portableTextToHtml(content?.note) || '',
+  address: portableTextToHtml(content?.address) || '',
   last_edited: content?._updatedAt ? new Date(content._updatedAt).toLocaleDateString() : '',
   image: parsedImage,
 };
@@ -167,9 +170,10 @@ const data: DataType = {
       {data.image?.asset?.url ? <img src={data.image.asset.url} alt="Uploaded Image" /> : <></>}
     </h1>
     <div class="text-offset description" set:html={data.description}></div>
-    <div class="text-offset note">{data.note}</div>
-    <div class="text-offset address">{data.address}</div>
+    <div class="text-offset note" set:html={data.note}></div>
+    <div class="text-offset address" set:html={data.address}></div>
     <script>
+
       function onResize() {
         const windowWidth = window.innerWidth;
         let newFontSizeBig, newFontSize;
@@ -205,9 +209,10 @@ const data: DataType = {
       onResize();
 
       const h1 = document.querySelector("h1 span")!;
-      const image = document.querySelector("img");
+      const image = document.querySelector("img")!;
       if (image) {
-        h1.addEventListener("mouseenter", () => {
+        function showImage() {
+          window.addEventListener("click", hideImage, { once: true });
           const randomAngle = (Math.random() - 0.5) * 10;
           const randomX = Math.random() * (window.innerWidth - image.offsetWidth);
           const randomY = Math.random() * (window.innerHeight - image.offsetHeight);
@@ -215,10 +220,13 @@ const data: DataType = {
           image.style.top = `${randomY}px`;
           image.style.transform = `rotate(${randomAngle}deg)`;
           image.style.opacity = "1";
-        });
-        h1.addEventListener("mouseleave", () => {
+        }
+        function hideImage() {
           image.style.opacity = "0";
-        });
+        }
+        h1.addEventListener("mouseenter", showImage);
+        h1.addEventListener("mouseleave", hideImage);
+        h1.addEventListener("touchstart", showImage);
       }
     </script>
   </body>
@@ -373,5 +381,10 @@ const data: DataType = {
       padding-top: var(--font-size-big);
       padding-bottom: var(--font-size-big);
     }
+  }
+
+  .smallcaps {
+    font-variant: small-caps;
+    letter-spacing: 0.04em;
   }
 </style>
