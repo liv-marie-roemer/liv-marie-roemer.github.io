@@ -7,4 +7,7 @@ export default defineConfig({
   devToolbar: {
     enabled: false,
   },
+  redirects: {
+    '/admin': 'https://liv-marie-roemer.sanity.studio/'
+  }
 });

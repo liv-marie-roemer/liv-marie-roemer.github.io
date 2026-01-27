@@ -6,6 +6,32 @@ export default defineType({
   title: 'Page Content',
   fields: [
     {
+      name: 'meta',
+      title: 'Meta',
+      type: 'object',
+      fields: [
+        {
+          name: 'title',
+          title: 'Title',
+          type: 'string',
+        },
+        {
+          name: "description",
+          title: "Description",
+          type: "string",
+        },
+        {
+          name: 'image',
+          title: 'Image',
+          type: 'image',
+          options: {
+            hotspot: true,
+          },
+          description: "Recommended size: 1200x630px (for social media sharing)",
+        }
+      ],
+    },
+    {
       name: 'title',
       type: 'string',
       title: 'Title',

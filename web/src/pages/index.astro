@@ -7,7 +7,7 @@ const dataset = 'production';
 const apiVersion = '2024-01-01';
 
 // Fetch data from Sanity using HTTP API
-const query = encodeURIComponent('*[_type == "pageContent"][0]{title, description[]{...}, note, address, image, _updatedAt}');
+const query = encodeURIComponent('*[_type == "pageContent"][0]{..., meta {title, description, image{...,asset->{...}}},  description[]{...}, image{...,asset->{...}}}');
 const sanityUrl = `https://${projectId}.api.sanity.io/v${apiVersion}/data/query/${dataset}?query=${query}`;
 
 const sanityRes = await fetch(sanityUrl, {
@@ -72,25 +72,70 @@ function portableTextToHtml(blocks: any[]): string {
     .join('\n');
 }
 
+
 // Transform Sanity data to match expected format
-const data: Record<string, string> = {
+interface ImageAsset {
+  image?: {
+      asset?: {
+        _ref?: string;
+        url?: string;
+      } | null;
+    } | null;
+}
+
+interface MetaType {
+  title: string;
+  description: string;
+  image?: ImageAsset;
+}
+
+interface DataType {
+  meta: MetaType;
+  title: string;
+  description: string;
+  note: string;
+  address: string;
+  last_edited: string;
+  image?: ImageAsset;
+}
+
+
+const meta: MetaType = {
+  title: content?.meta?.title || "Title",
+  description: content?.meta?.description || "Description",
+  image: content?.meta?.image || null,
+};
+
+// Build Sanity image URL for meta.image if it exists
+if (meta.image?.asset?._ref) {
+  const imageRef = meta.image.asset._ref;
+  const matches = imageRef.match(/image-([a-f0-9]+)-(\d+x\d+)-(\w+)/);
+  if (matches) {
+    const [, id, dimensions, format] = matches;
+    meta.image.asset.url = `https://cdn.sanity.io/images/${projectId}/${dataset}/${id}-${dimensions}.${format}?w=1200`;
+  }
+}
+
+// Parse content.image the same way as meta.image
+let parsedImage: ImageAsset = content?.image || null;
+if (parsedImage?.asset?._ref) {
+  const imageRef = parsedImage.asset._ref;
+  const matches = imageRef.match(/image-([a-f0-9]+)-(\d+x\d+)-(\w+)/);
+  if (matches) {
+    const [, id, dimensions, format] = matches;
+    parsedImage.asset.url = `https://cdn.sanity.io/images/${projectId}/${dataset}/${id}-${dimensions}.${format}?w=1600`;
+  }
+}
+
+const data: DataType = {
+  meta,
   title: content?.title || '',
   description: portableTextToHtml(content?.description),
   note: content?.note || '',
   address: content?.address || '',
   last_edited: content?._updatedAt ? new Date(content._updatedAt).toLocaleDateString() : '',
+  image: parsedImage,
 };
-
-// Build Sanity image URL if image exists
-if (content?.image?.asset?._ref) {
-  const imageRef = content.image.asset._ref;
-  // Extract image ID and dimensions from ref (format: image-{id}-{dimensions}-{format})
-  const matches = imageRef.match(/image-([a-f0-9]+)-(\d+x\d+)-(\w+)/);
-  if (matches) {
-    const [, id, dimensions, format] = matches;
-    data.image = `https://cdn.sanity.io/images/${projectId}/${dataset}/${id}-${dimensions}.${format}?w=1500`;
-  }
-}
 
 ---
 
@@ -99,9 +144,14 @@ if (content?.image?.asset?._ref) {
     <meta charset="utf-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon-black.svg" media="(prefers-color-scheme: light)" />
     <link rel="icon" type="image/svg+xml" href="/favicon-white.svg" media="(prefers-color-scheme: dark)" />
+    <meta name="description" content={data.meta.description} />
+    <meta property="og:title" content={data.meta.title} />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://livmarieroemer.com/" />
+    {data.meta?.image?.asset?.url && <meta property="og:image" content={data.meta.image.asset.url} />}
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="generator" content={Astro.generator} />
-    <title>{data.title}</title>
+    <title>{data.meta.title}</title>
   </head>
   <body data-edited={data.last_edited}>
     <div class="printmarks">
@@ -114,7 +164,7 @@ if (content?.image?.asset?._ref) {
     </div>
     <h1 class="text-offset">
       <span>{data.title}</span>
-      {data.image ? <img src={data.image} alt="Uploaded Image" /> : <></>}
+      {data.image?.asset?.url ? <img src={data.image.asset.url} alt="Uploaded Image" /> : <></>}
     </h1>
     <div class="text-offset description" set:html={data.description}></div>
     <div class="text-offset note">{data.note}</div>
@@ -143,10 +193,7 @@ if (content?.image?.asset?._ref) {
 
         const [x1, scale1] = locations[0];
         const [x2, scale2] = locations[1];
-
-        // Linear interpolation/extrapolation formula: y = y1 + (x - x1) * (y2 - y1) / (x2 - x1)
         const newScale = scale1 + (windowWidth - x1) * (scale2 - scale1) / (x2 - x1);
-
         printmarks.forEach(mark => {
           mark.style.transform = `scale(${newScale})`;
           const path = mark.querySelector('path')!;
@@ -200,6 +247,14 @@ if (content?.image?.asset?._ref) {
 <style lang="scss">
   $breakpoint-mobile: 768px;
 
+  @font-face {
+    font-family: "Tid";
+    src: url("/fonts/Tid-Regular.woff2") format("woff2"),
+         url("/fonts/Tid-Regular.woff") format("woff");
+    font-weight: 400;
+    font-style: normal;
+  }
+
   :root {
     --printmark-gap: 14px;
     --gap: 40px;
@@ -220,6 +275,7 @@ if (content?.image?.asset?._ref) {
   }
   html, body {
     overscroll-behavior: none;
+    font-family: "Tid", serif;
   }
   html {
     height: 100%;
@@ -237,13 +293,12 @@ if (content?.image?.asset?._ref) {
     margin: 0;
   }
   * {
-    font-family: inherit;
+    // font-family: inherit;
     font-weight: inherit;
     box-sizing: border-box;
   }
   body {
     position: relative;
-    font-family: system-ui, sans-serif;
     padding: var(--gap);
     min-height: 100%;
     & > * {
