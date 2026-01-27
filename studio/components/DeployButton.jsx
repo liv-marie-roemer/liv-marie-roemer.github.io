@@ -11,7 +11,7 @@ export default function DeployButton() {
 
     try {
       // GitHub Personal Access Token should be stored in environment variable
-      const token = import.meta.env.SANITY_STUDIO_GITHUB_TOKE
+      const token = import.meta.env.SANITY_STUDIO_GITHUB_TOKEN
 
       if (!token) {
         setStatus('Error: GitHub token not configured')
