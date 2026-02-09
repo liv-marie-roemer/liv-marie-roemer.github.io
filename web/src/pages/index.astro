@@ -219,7 +219,9 @@ const data: DataType = {
           image.style.top = `${randomY}px`;
           image.style.transform = `rotate(${randomAngle}deg)`;
           requestAnimationFrame(() => {
-            image.style.opacity = "1";
+            setTimeout(() => {
+              image.style.opacity = "1";
+            }, 10)
           })
         }
         function hideImage() {
