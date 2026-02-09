@@ -210,23 +210,28 @@ const data: DataType = {
 
       const h1 = document.querySelector("h1 span")!;
       const image = document.querySelector("img")!;
-      if (image) {
+      if (h1 && image) {
         function showImage() {
-          window.addEventListener("click", hideImage, { once: true });
           const randomAngle = (Math.random() - 0.5) * 10;
           const randomX = Math.random() * (window.innerWidth - image.offsetWidth);
           const randomY = Math.random() * (window.innerHeight - image.offsetHeight);
           image.style.left = `${randomX}px`;
           image.style.top = `${randomY}px`;
           image.style.transform = `rotate(${randomAngle}deg)`;
-          image.style.opacity = "1";
+          requestAnimationFrame(() => {
+            image.style.opacity = "1";
+          })
         }
         function hideImage() {
-          image.style.opacity = "0";
+          if (image.style.opacity === "1") {
+            image.style.opacity = "0";
+          }
         }
+        h1.addEventListener("click", showImage);
         h1.addEventListener("mouseenter", showImage);
         h1.addEventListener("mouseleave", hideImage);
-        h1.addEventListener("touchstart", showImage);
+        window.addEventListener("click", hideImage)
+        window.addEventListener("touchstart", hideImage)
       }
     </script>
   </body>
