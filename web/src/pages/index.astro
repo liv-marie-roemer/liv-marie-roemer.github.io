@@ -210,6 +210,8 @@ const data: DataType = {
 
       const h1 = document.querySelector("h1 span")!;
       const image = document.querySelector("img")!;
+      let disappearingTimeout: number | null = null;
+
       if (h1 && image) {
         function showImage() {
           const randomAngle = (Math.random() - 0.5) * 10;
@@ -218,6 +220,11 @@ const data: DataType = {
           image.style.left = `${randomX}px`;
           image.style.top = `${randomY}px`;
           image.style.transform = `rotate(${randomAngle}deg)`;
+          // make image disapear after 2 seconds
+          disappearingTimeout = setTimeout(() => {
+            image.style.opacity = "0";
+          }, 2000);
+
           requestAnimationFrame(() => {
             setTimeout(() => {
               image.style.opacity = "1";
@@ -227,6 +234,9 @@ const data: DataType = {
         function hideImage() {
           if (image.style.opacity === "1") {
             image.style.opacity = "0";
+            if (disappearingTimeout) {
+              clearTimeout(disappearingTimeout);
+            }
           }
         }
         h1.addEventListener("click", showImage);
